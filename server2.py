@@ -107,7 +107,7 @@ def index():
                 }
             });
 
-            setInterval(fetchUpdates, 3000);
+            setInterval(fetchUpdates, 1000);
             fetchUpdates();
         </script>
     </body>
